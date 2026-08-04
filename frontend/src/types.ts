@@ -35,8 +35,8 @@ export interface Hospital {
   _id: string;
   name: string;
   address: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email?: string;
   latitude: number;
   longitude: number;
   specialties: string[];
@@ -44,6 +44,9 @@ export interface Hospital {
   rating: number;
   beds: number;
   availableBeds: number;
+  distanceKm?: number | null;
+  mapsUrl?: string;
+  placeId?: string;
 }
 
 export interface Appointment {

@@ -33,9 +33,16 @@ export const vitalAPI = {
 
 export const hospitalAPI = {
   getAll: () => api.get<{ success: boolean; hospitals: Hospital[] }>('/hospitals'),
+  getNearby: (lat: number, lng: number) =>
+    api.get<{ success: boolean; source: string; hospitals: Hospital[] }>('/hospitals/nearby', { params: { lat, lng } }),
   getById: (id: string) => api.get<{ success: boolean; hospital: Hospital }>(`/hospitals/${id}`),
   create: (data: Partial<Hospital>) =>
     api.post<{ success: boolean; hospital: Hospital }>('/hospitals', data),
+};
+
+export const userAPI = {
+  update: (id: string, data: { name?: string; email?: string }) =>
+    api.put<{ success: boolean; user: User }>(`/users/${id}`, data),
 };
 
 export const appointmentAPI = {

@@ -1,9 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Heart, Activity, MapPin, Settings, Bell, LogOut, Menu, X, Plus, Zap, Wind, Droplet, TrendingUp, Clock, AlertCircle, ChevronRight, Star, Stethoscope, Users, Shield, ArrowRight } from 'lucide-react';
 import { User, Hospital, Vital, Appointment } from './types';
-import { authAPI, hospitalAPI, vitalAPI, appointmentAPI } from './api';
+import { authAPI, hospitalAPI, vitalAPI, appointmentAPI, userAPI } from './api';
 
 type Page = 'login' | 'dashboard' | 'hospitals' | 'vitals' | 'appointments' | 'profile';
+
+const HEALTH_TIPS = [
+  'Drink at least 8 glasses of water a day to stay properly hydrated.',
+  'Aim for 7-9 hours of sleep each night to support heart and immune health.',
+  'Take a 10-minute walk after meals to help regulate blood sugar.',
+  'Check your blood pressure regularly, especially if you have a family history of hypertension.',
+  'Practice deep breathing for 5 minutes daily to reduce stress and lower resting heart rate.',
+  'Limit sodium intake to under 2,300mg a day to support healthy blood pressure.',
+];
+
+function getLocationOnce(): Promise<{ lat: number; lng: number } | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000 }
+    );
+  });
+}
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('login');
@@ -11,6 +31,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [hospitalsSource, setHospitalsSource] = useState('mock');
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [email, setEmail] = useState('');
@@ -22,6 +43,54 @@ export default function App() {
     oxygenLevel: '',
   });
 
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingForm, setBookingForm] = useState({ hospitalId: '', reason: '', date: '' });
+  const [showTipsModal, setShowTipsModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const loadHospitals = async () => {
+    try {
+      let loc = location;
+      if (!loc) {
+        loc = await getLocationOnce();
+        setLocationStatus(loc ? 'granted' : 'denied');
+        if (loc) setLocation(loc);
+      }
+      const res = loc ? await hospitalAPI.getNearby(loc.lat, loc.lng) : await hospitalAPI.getAll();
+      if (res.data.success) {
+        setHospitals(res.data.hospitals);
+        setHospitalsSource((res.data as any).source || 'mock');
+      }
+    } catch (error) {
+      console.error('Failed to load hospitals:', error);
+    }
+  };
+
+  const loadVitals = async (uid?: string) => {
+    const id = uid || user?.id;
+    if (!id) return;
+    try {
+      const res = await vitalAPI.getByUserId(id);
+      if (res.data.success) setVitals(res.data.vitals);
+    } catch (error) {
+      console.error('Failed to load vitals:', error);
+    }
+  };
+
+  const loadAppointments = async (uid?: string) => {
+    const id = uid || user?.id;
+    if (!id) return;
+    try {
+      const res = await appointmentAPI.getByUserId(id);
+      if (res.data.success) setAppointments(res.data.appointments);
+    } catch (error) {
+      console.error('Failed to load appointments:', error);
+    }
+  };
+
   const handleGuestLogin = async () => {
     try {
       setLoading(true);
@@ -29,6 +98,8 @@ export default function App() {
       if (res.data.success) {
         setUser(res.data.user);
         setCurrentPage('dashboard');
+        loadVitals(res.data.user.id);
+        loadAppointments(res.data.user.id);
       }
     } catch (error) {
       console.error('Login failed:', error);
@@ -45,49 +116,14 @@ export default function App() {
       if (res.data.success) {
         setUser(res.data.user);
         setCurrentPage('dashboard');
+        loadVitals(res.data.user.id);
+        loadAppointments(res.data.user.id);
       }
     } catch (error) {
       console.error('Login failed:', error);
       alert('Login failed. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadHospitals = async () => {
-    try {
-      const res = await hospitalAPI.getAll();
-      if (res.data.success) {
-        setHospitals(res.data.hospitals);
-      }
-    } catch (error) {
-      console.error('Failed to load hospitals:', error);
-    }
-  };
-
-  const loadVitals = async () => {
-    try {
-      if (user?.id) {
-        const res = await vitalAPI.getByUserId(user.id);
-        if (res.data.success) {
-          setVitals(res.data.vitals);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load vitals:', error);
-    }
-  };
-
-  const loadAppointments = async () => {
-    try {
-      if (user?.id) {
-        const res = await appointmentAPI.getByUserId(user.id);
-        if (res.data.success) {
-          setAppointments(res.data.appointments);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load appointments:', error);
     }
   };
 
@@ -123,17 +159,70 @@ export default function App() {
     setCurrentPage('login');
     setEmail('');
     setPassword('');
+    setHospitals([]);
+    setVitals([]);
+    setAppointments([]);
   };
 
-  const handleSOSClick = () => {
-    alert('🚨 EMERGENCY ALERT\n\n✓ Ambulance dispatched\n✓ Emergency contacts notified\n✓ Location shared\n\nHelp is on the way.');
+  const handleSOSClick = async () => {
+    const loc = location || (await getLocationOnce());
+    const locText = loc
+      ? `Location shared: ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`
+      : 'Location unavailable - please enable location access for faster response';
+    alert(`🚨 EMERGENCY ALERT\n\n✓ Ambulance dispatched\n✓ Emergency contacts notified\n✓ ${locText}\n\nHelp is on the way.`);
+  };
+
+  const openBookingModal = () => {
+    setCurrentPage('appointments');
+    if (hospitals.length === 0) loadHospitals();
+    setShowBookingModal(true);
+  };
+
+  const handleBookAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+    try {
+      const res = await appointmentAPI.create({
+        patientId: user.id,
+        doctorId: '',
+        hospitalId: bookingForm.hospitalId,
+        reason: bookingForm.reason,
+        appointmentDate: bookingForm.date ? (new Date(bookingForm.date) as any) : (new Date() as any),
+        status: 'scheduled',
+        notes: '',
+      });
+      if (res.data.success) {
+        setShowBookingModal(false);
+        setBookingForm({ hospitalId: '', reason: '', date: '' });
+        loadAppointments();
+        alert('✅ Appointment scheduled successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to book appointment:', error);
+      alert('Failed to schedule appointment. Please try again.');
+    }
+  };
+
+  const handleSaveProfile = async ({ name, email: newEmail }: { name: string; email: string }) => {
+    if (!user?.id) return;
+    try {
+      const res = await userAPI.update(user.id, { name, email: newEmail });
+      if (res.data.success) {
+        setUser(res.data.user);
+        alert('✅ Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Failed to update profile. Please try again.');
+    }
   };
 
   useEffect(() => {
-    if (currentPage === 'hospitals' && hospitals.length === 0) {
-      loadHospitals();
-    }
-  }, [currentPage]);
+    if (currentPage !== 'hospitals') return;
+    loadHospitals();
+    const interval = setInterval(loadHospitals, 15000);
+    return () => clearInterval(interval);
+  }, [currentPage, location]);
 
   useEffect(() => {
     if (currentPage === 'vitals') {
@@ -150,6 +239,14 @@ export default function App() {
   if (!user) {
     return <LoginPage onGuestLogin={handleGuestLogin} onLogin={handleLogin} email={email} setEmail={setEmail} password={password} setPassword={setPassword} loading={loading} />;
   }
+
+  const notificationItems = [
+    ...(vitals[0] ? [`Last vitals recorded on ${new Date(vitals[0].recordedAt).toLocaleString()}`] : []),
+    ...appointments
+      .filter((a) => new Date(a.appointmentDate as any) > new Date())
+      .slice(0, 3)
+      .map((a) => `Upcoming: ${a.reason} on ${new Date(a.appointmentDate as any).toLocaleDateString()}`),
+  ];
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -188,11 +285,27 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-2.5 hover:bg-slate-100 rounded-lg transition-colors relative">
-              <Bell className="w-5 h-5 text-slate-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <button className="p-2.5 hover:bg-slate-100 rounded-lg transition-colors">
+            <div className="relative">
+              <button onClick={() => setShowNotifications(!showNotifications)} className="p-2.5 hover:bg-slate-100 rounded-lg transition-colors relative">
+                <Bell className="w-5 h-5 text-slate-600" />
+                {notificationItems.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl border-2 border-slate-200 shadow-2xl p-5 z-50">
+                  <h4 className="font-bold text-slate-900 mb-3">Notifications</h4>
+                  {notificationItems.length === 0 ? (
+                    <p className="text-sm text-slate-500">No new notifications</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {notificationItems.map((n, i) => (
+                        <p key={i} className="text-sm text-slate-700 pb-3 border-b border-slate-100 last:border-0">{n}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <button onClick={() => setCurrentPage('profile')} className="p-2.5 hover:bg-slate-100 rounded-lg transition-colors">
               <Settings className="w-5 h-5 text-slate-600" />
             </button>
             <button onClick={handleLogout} className="p-2.5 hover:bg-red-50 rounded-lg transition-colors">
@@ -203,11 +316,45 @@ export default function App() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
-          {currentPage === 'dashboard' && <DashboardPage user={user} handleSOSClick={handleSOSClick} vitals={vitals} hospitals={hospitals} loadVitals={loadVitals} />}
-          {currentPage === 'hospitals' && <HospitalsPage hospitals={hospitals} />}
+          {currentPage === 'dashboard' && (
+            <DashboardPage
+              user={user}
+              handleSOSClick={handleSOSClick}
+              vitals={vitals}
+              onRecordVitals={() => setCurrentPage('vitals')}
+              onFindHospital={() => setCurrentPage('hospitals')}
+              onBookAppointment={openBookingModal}
+              onHealthTips={() => setShowTipsModal(true)}
+              onReports={() => setShowReportsModal(true)}
+              onConsultations={() => setCurrentPage('hospitals')}
+            />
+          )}
+          {currentPage === 'hospitals' && (
+            <HospitalsPage
+              hospitals={hospitals}
+              source={hospitalsSource}
+              locationDenied={locationStatus === 'denied'}
+              onRetryLocation={() => {
+                setLocationStatus('idle');
+                setLocation(null);
+                loadHospitals();
+              }}
+            />
+          )}
           {currentPage === 'vitals' && <VitalsPage vitals={vitals} newVital={newVital} setNewVital={setNewVital} onAddVital={handleAddVital} />}
-          {currentPage === 'appointments' && <AppointmentsPage appointments={appointments} />}
-          {currentPage === 'profile' && <ProfilePage user={user} />}
+          {currentPage === 'appointments' && (
+            <AppointmentsPage
+              appointments={appointments}
+              hospitals={hospitals}
+              showBookingModal={showBookingModal}
+              setShowBookingModal={setShowBookingModal}
+              bookingForm={bookingForm}
+              setBookingForm={setBookingForm}
+              onBookAppointment={handleBookAppointment}
+              onOpenBooking={openBookingModal}
+            />
+          )}
+          {currentPage === 'profile' && <ProfilePage user={user} onSave={handleSaveProfile} />}
         </main>
       </div>
 
@@ -229,6 +376,59 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showTipsModal && (
+        <Modal onClose={() => setShowTipsModal(false)} title="Health Tips">
+          <ul className="space-y-4">
+            {HEALTH_TIPS.map((tip, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="text-purple-600 font-bold shrink-0">✓</span>
+                <span className="text-slate-700">{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </Modal>
+      )}
+
+      {showReportsModal && (
+        <Modal onClose={() => setShowReportsModal(false)} title="Health Report">
+          {vitals.length === 0 ? (
+            <p className="text-slate-500">No vitals recorded yet — record some vitals to see your report.</p>
+          ) : (
+            <div className="space-y-4">
+              <ReportStat label="Total Records" value={String(vitals.length)} />
+              <ReportStat label="Average Heart Rate" value={`${Math.round(vitals.reduce((s, v) => s + Number(v.heartRate || 0), 0) / vitals.length)} bpm`} />
+              <ReportStat label="Average Oxygen Level" value={`${Math.round(vitals.reduce((s, v) => s + Number(v.oxygenLevel || 0), 0) / vitals.length)}%`} />
+              <ReportStat label="Latest Blood Pressure" value={vitals[0]?.bloodPressure || '--'} />
+            </div>
+          )}
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Modal({ title, onClose, children }: any) {
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-6" onClick={onClose}>
+      <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-slate-900">{title}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X className="w-5 h-5 text-slate-500" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ReportStat({ label, value }: any) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border-2 border-slate-200">
+      <p className="text-sm font-bold text-slate-600">{label}</p>
+      <p className="text-lg font-bold text-slate-900">{value}</p>
     </div>
   );
 }
@@ -405,7 +605,7 @@ function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, setPasswo
   );
 }
 
-function DashboardPage({ user, handleSOSClick, vitals }: any) {
+function DashboardPage({ user, handleSOSClick, vitals, onRecordVitals, onFindHospital, onBookAppointment, onHealthTips, onReports, onConsultations }: any) {
   const lastVital = vitals?.[0];
 
   return (
@@ -463,12 +663,12 @@ function DashboardPage({ user, handleSOSClick, vitals }: any) {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <ActionButton icon={Droplet} label="Record Vitals" />
-          <ActionButton icon={MapPin} label="Find Hospital" />
-          <ActionButton icon={Clock} label="Book Appointment" />
-          <ActionButton icon={Activity} label="Health Tips" />
-          <ActionButton icon={TrendingUp} label="Reports" />
-          <ActionButton icon={Stethoscope} label="Consultations" />
+          <ActionButton icon={Droplet} label="Record Vitals" onClick={onRecordVitals} />
+          <ActionButton icon={MapPin} label="Find Hospital" onClick={onFindHospital} />
+          <ActionButton icon={Clock} label="Book Appointment" onClick={onBookAppointment} />
+          <ActionButton icon={Activity} label="Health Tips" onClick={onHealthTips} />
+          <ActionButton icon={TrendingUp} label="Reports" onClick={onReports} />
+          <ActionButton icon={Stethoscope} label="Consultations" onClick={onConsultations} />
         </div>
 
         {/* Recent Activity */}
@@ -501,7 +701,7 @@ function DashboardPage({ user, handleSOSClick, vitals }: any) {
   );
 }
 
-function HospitalsPage({ hospitals }: any) {
+function HospitalsPage({ hospitals, source, locationDenied, onRetryLocation }: any) {
   return (
     <div className="p-6 lg:p-12">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -514,6 +714,23 @@ function HospitalsPage({ hospitals }: any) {
           <p className="text-xl text-slate-600">Find and connect with quality healthcare facilities</p>
         </div>
 
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+          </span>
+          Live bed availability · {source === 'google-places' ? 'Real hospitals near your location' : 'Demo data (simulated)'}
+        </div>
+
+        {locationDenied && (
+          <div className="flex items-center justify-between gap-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
+            <p className="text-amber-800 font-semibold text-sm">Enable location access to see hospitals nearest to you.</p>
+            <button onClick={onRetryLocation} className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-sm shrink-0 transition-colors">
+              Enable Location
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {hospitals?.map((hospital: Hospital) => (
             <div key={hospital._id} className="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden hover:shadow-2xl transition-all hover:scale-105 hover:border-purple-300">
@@ -522,7 +739,8 @@ function HospitalsPage({ hospitals }: any) {
                   <div className="flex-1">
                     <h3 className="text-2xl font-bold text-slate-900">{hospital.name}</h3>
                     <p className="text-slate-600 text-base mt-2">{hospital.address}</p>
-                    <p className="text-slate-500 text-sm mt-2">📞 {hospital.phone}</p>
+                    {hospital.phone && <p className="text-slate-500 text-sm mt-2">📞 {hospital.phone}</p>}
+                    {hospital.distanceKm != null && <p className="text-purple-600 font-bold text-sm mt-2">{hospital.distanceKm} km away</p>}
                   </div>
                   <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 px-4 py-2 rounded-full shrink-0 shadow-lg">
                     <Star className="w-5 h-5 text-white fill-white" />
@@ -550,8 +768,22 @@ function HospitalsPage({ hospitals }: any) {
                 </div>
 
                 <div className="flex gap-4 pt-8 border-t-2 border-slate-200">
-                  <button className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all hover:scale-105">Call</button>
-                  <button className="flex-1 py-3 bg-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-300 transition-all hover:scale-105">Directions</button>
+                  <a
+                    href={hospital.phone ? `tel:${hospital.phone}` : (hospital.mapsUrl || '#')}
+                    target={hospital.phone ? undefined : '_blank'}
+                    rel="noreferrer"
+                    className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all hover:scale-105 text-center"
+                  >
+                    Call
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${hospital.latitude},${hospital.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 py-3 bg-slate-200 text-slate-900 font-bold rounded-xl hover:bg-slate-300 transition-all hover:scale-105 text-center"
+                  >
+                    Directions
+                  </a>
                 </div>
               </div>
             </div>
@@ -623,7 +855,7 @@ function VitalsPage({ vitals, newVital, setNewVital, onAddVital }: any) {
   );
 }
 
-function AppointmentsPage({ appointments }: any) {
+function AppointmentsPage({ appointments, hospitals, showBookingModal, setShowBookingModal, bookingForm, setBookingForm, onBookAppointment, onOpenBooking }: any) {
   return (
     <div className="p-6 lg:p-12">
       <div className="max-w-4xl mx-auto space-y-10">
@@ -635,7 +867,7 @@ function AppointmentsPage({ appointments }: any) {
               <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">Appointments</span>
             </h1>
           </div>
-          <button className="hidden md:flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all hover:scale-105 text-lg shrink-0">
+          <button onClick={onOpenBooking} className="hidden md:flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all hover:scale-105 text-lg shrink-0">
             <Plus className="w-6 h-6" />
             New
           </button>
@@ -648,7 +880,7 @@ function AppointmentsPage({ appointments }: any) {
             </div>
             <p className="text-slate-700 text-2xl font-bold">No appointments scheduled</p>
             <p className="text-slate-500 mt-3 text-lg">Book your first appointment</p>
-            <button className="mt-8 px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
+            <button onClick={onOpenBooking} className="mt-8 px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
               Schedule Now
             </button>
           </div>
@@ -663,7 +895,7 @@ function AppointmentsPage({ appointments }: any) {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-lg">{apt.reason}</h3>
-                      <p className="text-sm text-slate-500">{new Date(apt.appointmentDate).toLocaleDateString()}</p>
+                      <p className="text-sm text-slate-500">{new Date(apt.appointmentDate as any).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <span className="px-6 py-2 bg-green-500 text-white font-bold rounded-full text-sm shadow-lg">{apt.status}</span>
@@ -673,11 +905,61 @@ function AppointmentsPage({ appointments }: any) {
           </div>
         )}
       </div>
+
+      {showBookingModal && (
+        <Modal title="Book Appointment" onClose={() => setShowBookingModal(false)}>
+          <form onSubmit={onBookAppointment} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Hospital</label>
+              <select
+                required
+                value={bookingForm.hospitalId}
+                onChange={(e) => setBookingForm({ ...bookingForm, hospitalId: e.target.value })}
+                className="w-full px-5 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
+              >
+                <option value="">Select a hospital</option>
+                {hospitals?.map((h: Hospital) => (
+                  <option key={h._id} value={h._id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
+            <VitalInput label="Reason for Visit" placeholder="Annual check-up" value={bookingForm.reason} onChange={(e) => setBookingForm({ ...bookingForm, reason: e.target.value })} />
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Date & Time</label>
+              <input
+                type="datetime-local"
+                required
+                value={bookingForm.date}
+                onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                className="w-full px-5 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div className="flex gap-4 pt-2">
+              <button type="button" onClick={() => setShowBookingModal(false)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">
+                Cancel
+              </button>
+              <button type="submit" className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all">
+                Confirm
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }
 
-function ProfilePage({ user }: any) {
+function ProfilePage({ user, onSave }: any) {
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave({ name, email });
+    setSaving(false);
+  };
+
   return (
     <div className="p-6 lg:p-12">
       <div className="max-w-2xl mx-auto space-y-10">
@@ -704,11 +986,11 @@ function ProfilePage({ user }: any) {
           </div>
 
           <div className="space-y-8">
-            <VitalInput label="Full Name" value={user.name} />
-            <VitalInput label="Email Address" value={user.email || ''} />
+            <VitalInput label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <VitalInput label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
             <VitalInput label="Account Type" value={user.userType} disabled />
-            <button className="w-full py-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white font-bold rounded-xl hover:shadow-xl transition-all hover:scale-105 text-lg">
-              Save Changes
+            <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white font-bold rounded-xl hover:shadow-xl transition-all hover:scale-105 text-lg disabled:opacity-60">
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -763,9 +1045,9 @@ function MetricCard({ icon: Icon, label, value, unit, color }: any) {
   );
 }
 
-function ActionButton({ icon: Icon, label }: any) {
+function ActionButton({ icon: Icon, label, onClick }: any) {
   return (
-    <button className="p-6 bg-white hover:shadow-lg rounded-2xl border-2 border-slate-200 hover:border-purple-300 transition-all group">
+    <button onClick={onClick} className="p-6 bg-white hover:shadow-lg rounded-2xl border-2 border-slate-200 hover:border-purple-300 transition-all group">
       <Icon className="w-7 h-7 text-purple-600 group-hover:text-blue-600 mx-auto mb-3" />
       <p className="text-sm font-bold text-slate-700 group-hover:text-purple-600 text-center line-clamp-2">{label}</p>
     </button>

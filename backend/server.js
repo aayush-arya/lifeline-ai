@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -7,6 +8,48 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Deterministic pseudo-random seed from a string (place_id), so a given
+// hospital's simulated bed capacity stays stable across requests.
+function seedFromString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+// Real-time bed occupancy isn't published by any public API (Google Maps
+// included) - hospitals don't expose this outside internal systems. We seed
+// a plausible capacity per hospital and let it drift over time so the UI
+// has something live to show, rather than pretending it's sourced data.
+const bedsCache = {};
+
+function getOrSeedBeds(placeId, seedKey) {
+  if (!bedsCache[placeId]) {
+    const seed = seedFromString(seedKey || placeId);
+    const beds = 80 + (seed % 520);
+    const availableBeds = Math.max(1, Math.round(beds * (0.1 + (seed % 30) / 100)));
+    bedsCache[placeId] = { beds, availableBeds };
+  }
+  return bedsCache[placeId];
+}
+
+function nudgeBeds(record) {
+  const delta = Math.floor(Math.random() * 7) - 3;
+  record.availableBeds = Math.max(0, Math.min(record.beds, record.availableBeds + delta));
+}
 
 // In-Memory Database
 const mockData = {
@@ -174,6 +217,22 @@ app.post('/api/auth/guest', (req, res) => {
   res.json({ success: true, user: guest });
 });
 
+// User Routes
+app.put('/api/users/:id', (req, res) => {
+  try {
+    const user = mockData.users.find(u => u.id === req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const { name, email } = req.body;
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, userType: user.userType } });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 // Patient Routes
 app.get('/api/patients', (req, res) => {
   try {
@@ -242,6 +301,72 @@ app.get('/api/hospitals', (req, res) => {
   }
 });
 
+// Nearby Hospitals (real hospitals via Google Places when configured,
+// mock data sorted by real distance otherwise). Bed counts are always a
+// live simulation layered on top - see bedsCache comment above.
+app.get('/api/hospitals/nearby', async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+  const hasLocation = !Number.isNaN(lat) && !Number.isNaN(lng);
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    const hospitals = mockData.hospitals.map(h => ({
+      ...h,
+      distanceKm: hasLocation ? Math.round(haversineKm(lat, lng, h.latitude, h.longitude) * 10) / 10 : null,
+    }));
+    if (hasLocation) hospitals.sort((a, b) => a.distanceKm - b.distanceKm);
+    return res.json({ success: true, source: 'mock', hospitals });
+  }
+
+  if (!hasLocation) {
+    return res.status(400).json({ success: false, error: 'lat and lng query params are required' });
+  }
+
+  try {
+    const { data } = await axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
+      params: {
+        location: `${lat},${lng}`,
+        rankby: 'distance',
+        type: 'hospital',
+        key: GOOGLE_MAPS_API_KEY,
+      },
+    });
+
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      throw new Error(data.error_message || data.status);
+    }
+
+    const hospitals = (data.results || []).slice(0, 20).map(place => {
+      const beds = getOrSeedBeds(place.place_id);
+      return {
+        _id: place.place_id,
+        placeId: place.place_id,
+        name: place.name,
+        address: place.vicinity || '',
+        phone: null,
+        mapsUrl: `https://www.google.com/maps/place/?q=place_id:${place.place_id}`,
+        latitude: place.geometry?.location?.lat,
+        longitude: place.geometry?.location?.lng,
+        specialties: ['General Medicine'],
+        emergencyAvailable: true,
+        rating: place.rating || 4.0,
+        beds: beds.beds,
+        availableBeds: beds.availableBeds,
+        distanceKm: Math.round(haversineKm(lat, lng, place.geometry?.location?.lat, place.geometry?.location?.lng) * 10) / 10,
+      };
+    });
+
+    res.json({ success: true, source: 'google-places', hospitals });
+  } catch (error) {
+    console.error('Google Places request failed, falling back to mock hospitals:', error.message);
+    const hospitals = mockData.hospitals.map(h => ({
+      ...h,
+      distanceKm: Math.round(haversineKm(lat, lng, h.latitude, h.longitude) * 10) / 10,
+    })).sort((a, b) => a.distanceKm - b.distanceKm);
+    res.json({ success: true, source: 'mock-fallback', error: error.message, hospitals });
+  }
+});
+
 app.post('/api/hospitals', (req, res) => {
   try {
     const hospital = {
@@ -302,10 +427,16 @@ app.get('/api/dashboard/:userId', (req, res) => {
   }
 });
 
+setInterval(() => {
+  mockData.hospitals.forEach(nudgeBeds);
+  Object.values(bedsCache).forEach(nudgeBeds);
+}, 15000);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ LifeLine AI Server running on http://localhost:${PORT}`);
   console.log(`📊 API ready at http://localhost:${PORT}/api`);
   console.log(`💾 Using in-memory database (mock data)`);
   console.log(`🏥 Pre-loaded ${mockData.hospitals.length} hospitals`);
+  console.log(GOOGLE_MAPS_API_KEY ? '🗺️  Google Places nearby-hospital search enabled' : '🗺️  GOOGLE_MAPS_API_KEY not set - using mock hospitals for nearby search');
 });
