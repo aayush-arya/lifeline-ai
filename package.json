@@ -1,0 +1,22 @@
+{
+  "name": "lifeline-healthcare",
+  "version": "1.0.0",
+  "description": "Modern Healthcare Dashboard - Emergency Services, Health Tracking, Hospital Finder",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ..",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm install",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": ["healthcare", "dashboard", "emergency", "health-tracking"],
+  "author": "LifeLine AI Team",
+  "license": "MIT",
+  "type": "commonjs"
+}
