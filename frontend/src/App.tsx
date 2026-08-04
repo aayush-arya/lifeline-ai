@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Activity, MapPin, Settings, Bell, LogOut, Menu, X, Plus, Zap, Wind, Droplet, TrendingUp, Clock, AlertCircle, ChevronRight, Star, Stethoscope, Users, Shield, ArrowRight, Pulse } from 'lucide-react';
+import { Heart, Activity, MapPin, Settings, Bell, LogOut, Menu, X, Plus, Zap, Wind, Droplet, TrendingUp, Clock, AlertCircle, ChevronRight, Star, Stethoscope, Users, Shield, ArrowRight } from 'lucide-react';
 import { User, Hospital, Vital, Appointment } from './types';
 import { authAPI, hospitalAPI, vitalAPI, appointmentAPI } from './api';
 
@@ -367,7 +367,7 @@ function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, setPasswo
           {/* Health Icons Grid */}
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-8 border border-white/30 hover:bg-white/30 transition-all">
-              <Pulse className="w-8 h-8 text-white mx-auto mb-3" />
+              <Activity className="w-8 h-8 text-white mx-auto mb-3" />
               <p className="text-white/90 text-sm font-semibold">Health<br/>Monitor</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-8 border border-white/30 hover:bg-white/30 transition-all">
