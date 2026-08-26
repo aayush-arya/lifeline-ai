@@ -2,7 +2,5 @@ node_modules
 .git
 .gitignore
 README.md
-SETUP.md
-QUICKSTART.md
 .env
 .env.local

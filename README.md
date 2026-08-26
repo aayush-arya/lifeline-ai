@@ -1,230 +1,148 @@
-# LifeLine AI - Healthcare Dashboard
+# LifeLine AI
 
-A modern, professional healthcare management dashboard built with React, Node.js, and MongoDB. Features real-time health monitoring, emergency services, hospital finder, and comprehensive patient management.
+A healthcare dashboard for tracking vitals, finding nearby hospitals, booking appointments, and triggering emergency assistance - built with React 19, TypeScript, and an Express API secured with JWT auth.
 
-## 🚀 Features
+[![CI](https://github.com/aayush-arya/lifeline-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/aayush-arya/lifeline-ai/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- **Smart Dashboard** - Real-time health metrics and quick access to essential services
-- **Vital Signs Tracking** - Record and monitor heart rate, blood pressure, temperature, and oxygen levels
-- **Hospital Finder** - Locate nearby hospitals with real-time bed availability and specialties
-- **Emergency Services** - One-tap SOS alert with automatic emergency contact notification
-- **Medical Records** - Centralized patient medical history and document management
-- **Appointment Management** - Schedule and track medical appointments
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
-- **Authentication** - Secure login with guest access option
+![Dashboard](.github/assets/screenshots/dashboard.png)
 
-## 🛠️ Tech Stack
+## Live demo
 
-### Frontend
-- React 19 with TypeScript
-- Tailwind CSS for modern styling
-- Vite for fast development and building
-- Axios for API communication
-- Lucide React for beautiful icons
+**[Add your deployed URL here after following the deployment guide below]**
 
-### Backend
-- Node.js with Express
-- MongoDB for data persistence
-- JWT for authentication
-- CORS enabled for cross-origin requests
+Sign in with the seeded demo account, or skip the form and continue as a guest:
 
-## 📋 Prerequisites
+| | |
+|---|---|
+| Email | `demo@lifeline.ai` |
+| Password | `demo1234` |
 
-- Node.js (v18 or higher)
-- npm or yarn
-- MongoDB (or Docker for containerized setup)
+## Features
 
-## 🚀 Quick Start
+- **Dashboard** - vitals at a glance, a heart-rate trend chart, quick actions, recent activity
+- **Emergency SOS** - one tap dispatches an alert with the user's live geolocation, with a graceful fallback when location is unavailable
+- **Hospital finder** - nearby hospitals via the Google Places API when configured, with distance sorted mock data as an automatic fallback; live bed-occupancy simulation
+- **Vitals tracking** - record heart rate, blood pressure, temperature, and oxygen level, with history and trend visualization
+- **Appointments** - book and track appointments against real hospitals
+- **JWT authentication** - bcrypt-hashed passwords, per-user route authorization (one account's token can't read or write another account's data)
+- **Fully responsive** - desktop sidebar nav collapses to a mobile drawer
 
-### Option 1: Local Development
+|  |  |
+|---|---|
+| ![Login](.github/assets/screenshots/login.png) | ![Hospitals](.github/assets/screenshots/hospitals.png) |
+| ![Vitals](.github/assets/screenshots/vitals.png) | ![Mobile](.github/assets/screenshots/mobile-dashboard.png) |
 
-#### 1. Setup Backend
-```bash
-cd backend
-npm install
-npm start
+## Tech stack
+
+**Frontend** - React 19, TypeScript, React Router 7, Tailwind CSS v4, Vite, Axios, Vitest + React Testing Library
+
+**Backend** - Node.js, Express 5, JWT (`jsonwebtoken`), `bcryptjs`, Node's built-in test runner + Supertest
+
+**Data** - an in-memory store, seeded on boot. There's no database to provision, so the app runs with zero configuration; see [Data layer](#data-layer) below if you want to swap in a real one.
+
+## Architecture
+
 ```
-Backend will run on `http://localhost:5000`
+frontend/src/
+  pages/           route-level screens (Dashboard, Hospitals, Vitals, Appointments, Profile, Login)
+  components/
+    layout/        AppShell, Sidebar, Header, MobileNav
+    dashboard/      MetricCard, ActionButton
+    ui/            Button, Card, Modal, Toast, TextField, Badge, Sparkline
+  lib/              geolocation helper, the shared router-outlet context type
+  api.ts            typed Axios client + auth-token interceptor
 
-#### 2. Setup Frontend (in a new terminal)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Frontend will run on `http://localhost:3000`
-
-### Option 2: Docker Compose (Recommended)
-
-```bash
-docker-compose up
-```
-
-This will start:
-- Frontend on `http://localhost:3000`
-- Backend on `http://localhost:5000`
-- MongoDB on `localhost:27017`
-
-## 📝 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/guest` - Login as guest
-
-### Patients
-- `GET /api/patients` - Get all patients
-- `POST /api/patients` - Create new patient
-- `GET /api/patients/:id` - Get patient by ID
-
-### Vitals
-- `POST /api/vitals` - Record vital signs
-- `GET /api/vitals/:userId` - Get user's vital history
-
-### Hospitals
-- `GET /api/hospitals` - Get all hospitals
-- `POST /api/hospitals` - Add new hospital
-
-### Appointments
-- `POST /api/appointments` - Schedule appointment
-- `GET /api/appointments/:userId` - Get user's appointments
-
-### Dashboard
-- `GET /api/dashboard/:userId` - Get dashboard data
-
-## 🎨 UI Features
-
-### Modern Design
-- Dark theme with blue accent colors matching healthcare branding
-- Glass morphism effects for depth
-- Smooth animations and transitions
-- Mobile-first responsive layout
-
-### Components
-- **Dashboard** - Overview of health metrics and quick actions
-- **Hospitals** - Hospital directory with ratings and availability
-- **Vitals** - Health tracking and history
-- **Appointments** - Appointment scheduling and management
-- **Profile** - User settings and information
-- **Medical Records** - Document management
-
-## 🔐 Security Features
-
-- Input validation on both frontend and backend
-- Environment variables for sensitive data
-- CORS protection
-- User authentication with JWT tokens
-- Password hashing with bcryptjs
-
-## 📱 Responsive Breakpoints
-
-- Mobile: < 768px
-- Tablet: 768px - 1024px
-- Desktop: > 1024px
-
-## 🎯 Demo Credentials
-
-For testing purposes, you can use any email and password combination when logging in locally. Guest access is also available.
-
-## 🧪 Testing Features
-
-1. **Emergency SOS** - Click the red SOS button on any page
-2. **Add Vitals** - Record health metrics and view history
-3. **Hospital Search** - Browse nearby hospitals with full details
-4. **Appointment Booking** - Schedule and manage appointments
-5. **User Profile** - View and update user information
-
-## 🚀 Deployment
-
-### Build for Production
-
-**Frontend:**
-```bash
-cd frontend
-npm run build
+backend/
+  server.js         app wiring only - middleware, routes, the bed-simulation interval
+  src/
+    routes/         one file per resource, mounted under /api
+    controllers/     request handlers
+    middleware/      requireAuth / requireOwnUser (JWT verification + per-user authorization)
+    services/        geo distance, bed-occupancy simulation, Google Places client
+    data/store.js    the in-memory data store + seed data
 ```
 
-**Backend:**
-```bash
-cd backend
-npm start
-```
+Both sides moved from a single monolithic file (one 1,080-line `App.tsx`, one 442-line `server.js`) to this structure; behavior is unchanged, just organized.
 
-### Docker Deployment
+## Getting started
+
+**Prerequisites:** Node.js 18+
 
 ```bash
-docker-compose -f docker-compose.yml up -d
+npm run install-all   # installs root, backend, and frontend dependencies
+npm start             # runs backend (:5000) and frontend (:3000) together
 ```
 
-## 📊 Database Schema
+Or run them separately in two terminals:
 
-### Users Collection
-- name, email, phone, password
-- userType (patient, doctor, admin, guest)
-- profilePicture, address, dateOfBirth, bloodType
-- emergencyContact details
+```bash
+cd backend && npm install && npm start   # http://localhost:5000
+cd frontend && npm install && npm run dev  # http://localhost:3000
+```
 
-### Patients Collection
-- userId, name, age, gender
-- medicalHistory, allergies, medications
-- lastCheckup, nextAppointment
+### Docker Compose
 
-### Vitals Collection
-- userId, heartRate, bloodPressure, temperature
-- oxygenLevel, weight, height, bloodGlucose
-- recordedAt timestamp
+```bash
+JWT_SECRET=$(openssl rand -hex 32) docker-compose up
+```
 
-### Hospitals Collection
-- name, address, phone, email
-- specialties, emergencyAvailable, rating
-- beds, availableBeds
+`JWT_SECRET` is required for the compose file (see [Environment variables](#environment-variables)) - running `npm start`/`npm run dev` directly doesn't need it, since the backend falls back to an insecure development default with a startup warning.
 
-### Appointments Collection
-- patientId, doctorId, hospitalId
-- appointmentDate, reason, status, notes
+## Environment variables
 
-## 🐛 Troubleshooting
+Copy `backend/.env.example` to `backend/.env` and fill in what you need - every var is optional for local dev:
 
-### Backend Connection Issues
-- Ensure MongoDB is running
-- Check `MONGODB_URI` in `.env` file
-- Verify port 5000 is not in use
+| Variable | Purpose |
+|---|---|
+| `PORT` | API server port. Defaults to `5000`. |
+| `JWT_SECRET` | Signs auth tokens. Falls back to an insecure dev default (with a console warning) if unset - set a real value before deploying. |
+| `GOOGLE_MAPS_API_KEY` | Enables real nearby-hospital search via Google Places. Without it, `/api/hospitals/nearby` falls back to bundled mock hospitals sorted by real distance. |
 
-### Frontend Not Loading
-- Clear browser cache
-- Check if backend is running
-- Verify Vite dev server is running on port 3000
+The frontend reads `VITE_API_URL` (see `frontend/vercel.json` / your deployment config) to know where the API lives; it defaults to `http://localhost:5000/api`.
 
-### API Errors
-- Check browser console for CORS errors
-- Verify API endpoints are correct
-- Ensure backend server is responding
+## Testing
 
-## 📚 Documentation
+```bash
+cd backend && npm test    # Node's built-in test runner + Supertest
+cd frontend && npm test   # Vitest + React Testing Library
+```
 
-For more detailed information about specific features:
-- Check component files in `frontend/src/`
-- Review API routes in `backend/server.js`
-- Examine database schemas in `backend/server.js`
+Both suites also run in CI on every push and pull request (see the badge above).
 
-## 🤝 Contributing
+## API reference
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+All routes are prefixed with `/api`. Routes marked 🔒 require `Authorization: Bearer <token>` and only allow a caller to access their own `:userId`/`:id`.
 
-## 📄 License
+| Method | Route | |
+|---|---|---|
+| POST | `/auth/register` | |
+| POST | `/auth/login` | |
+| POST | `/auth/guest` | |
+| PUT | `/users/:id` | 🔒 |
+| GET | `/hospitals` | |
+| GET | `/hospitals/nearby?lat=&lng=` | |
+| POST | `/hospitals` | |
+| POST | `/vitals` | 🔒 (owner derived from the token, not the request body) |
+| GET | `/vitals/:userId` | 🔒 |
+| POST | `/appointments` | 🔒 (owner derived from the token) |
+| GET | `/appointments/:userId` | 🔒 |
+| GET | `/dashboard/:userId` | 🔒 |
+| GET | `/patients`, `/patients/:id`, POST `/patients` | |
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Data layer
 
-## 🆘 Support
+Everything lives in `backend/src/data/store.js` as plain in-memory objects, seeded with a demo user, a demo patient, one vitals record, and three hospitals. That's a deliberate choice for a project meant to be cloned and run instantly - there's nothing to provision. To point it at a real database instead, replace the reads/writes in `src/controllers/*.js` with calls to your persistence layer of choice; the entity shapes are already documented via the seed data and `frontend/src/types.ts`.
 
-For issues and questions, please create an issue in the repository.
+## Deployment
 
-## 🎉 Acknowledgments
+See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step guides (Render for the backend, Vercel for the frontend). In short:
 
-- Built with ❤️ for healthcare professionals
-- Inspired by modern healthcare management systems
-- Designed for accessibility and ease of use
+```bash
+cd frontend && npm run build   # static output in frontend/dist
+cd backend && npm start        # set PORT, JWT_SECRET, and optionally GOOGLE_MAPS_API_KEY
+```
 
----
+## License
 
-**LifeLine AI** - Making Healthcare Accessible, Efficient, and Secure
+[MIT](LICENSE)

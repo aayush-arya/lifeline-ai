@@ -16,7 +16,10 @@
     "docker:logs": "docker-compose logs -f"
   },
   "keywords": ["healthcare", "dashboard", "emergency", "health-tracking"],
-  "author": "LifeLine AI Team",
+  "author": "Aayush Arya",
   "license": "MIT",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
 }
