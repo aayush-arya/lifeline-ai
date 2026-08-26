@@ -88,7 +88,7 @@ export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, se
           </div>
 
           <div className="text-center space-y-1.5 pt-4 border-t border-slate-200">
-            <p className="text-xs text-slate-500">Demo: use any email and password, or continue as guest</p>
+            <p className="text-xs text-slate-500">Demo account: demo@lifeline.ai / demo1234 — or continue as guest</p>
             <p className="text-xs text-slate-400">
               By signing in, you agree to our{' '}
               <a href="#" className="text-indigo-600 hover:underline">Terms</a> and{' '}

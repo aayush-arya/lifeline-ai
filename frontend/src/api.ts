@@ -7,13 +7,34 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+let authToken: string | null = null;
+
+/** Sets (or clears, with null) the bearer token attached to every request. */
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
+api.interceptors.request.use((config) => {
+  if (authToken) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${authToken}`;
+  }
+  return config;
+});
+
+interface AuthResponse {
+  success: boolean;
+  user: User;
+  token: string;
+}
+
 export const authAPI = {
   register: (data: { name: string; email: string; phone: string; password: string; userType: string }) =>
-    api.post('/auth/register', data),
+    api.post<AuthResponse>('/auth/register', data),
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+    api.post<AuthResponse>('/auth/login', { email, password }),
   loginAsGuest: () =>
-    api.post('/auth/guest'),
+    api.post<AuthResponse>('/auth/guest'),
 };
 
 export const patientAPI = {

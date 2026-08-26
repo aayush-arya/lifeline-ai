@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { User, Hospital, Vital, Appointment } from './types';
-import { authAPI, hospitalAPI, vitalAPI, appointmentAPI, userAPI } from './api';
+import { authAPI, hospitalAPI, vitalAPI, appointmentAPI, userAPI, setAuthToken } from './api';
 import { getLocationOnce, type Coordinates } from './lib/geolocation';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { AppShell } from './components/layout/AppShell';
@@ -84,6 +84,7 @@ function AppRoutes() {
       const res = await authAPI.loginAsGuest();
       if (res.data.success) {
         setUser(res.data.user);
+        setAuthToken(res.data.token);
         loadVitals(res.data.user.id);
         loadAppointments(res.data.user.id);
         navigate('/dashboard');
@@ -103,6 +104,7 @@ function AppRoutes() {
       const res = await authAPI.login(email, password);
       if (res.data.success) {
         setUser(res.data.user);
+        setAuthToken(res.data.token);
         loadVitals(res.data.user.id);
         loadAppointments(res.data.user.id);
         navigate('/dashboard');
@@ -145,6 +147,7 @@ function AppRoutes() {
 
   const handleLogout = () => {
     setUser(null);
+    setAuthToken(null);
     setEmail('');
     setPassword('');
     setHospitals([]);

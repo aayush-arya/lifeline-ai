@@ -1,17 +1,18 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "",
+  "description": "LifeLine AI frontend - React + TypeScript healthcare dashboard",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Aayush Arya",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -28,5 +29,12 @@
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.16"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.6",
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.11"
   }
 }
