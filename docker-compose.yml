@@ -1,31 +1,17 @@
 version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:7.0
-    container_name: lifeline-mongodb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-
   backend:
     build:
       context: ./backend
     container_name: lifeline-backend
     environment:
-      MONGODB_URI: mongodb://root:password@mongodb:27017/lifeline-healthcare
       PORT: 5000
       NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in your environment or a .env file}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
     ports:
       - "5000:5000"
-    depends_on:
-      - mongodb
-    volumes:
-      - ./backend:/app
 
   frontend:
     build:
@@ -37,8 +23,3 @@ services:
       VITE_API_URL: http://localhost:5000/api
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-
-volumes:
-  mongodb_data:
