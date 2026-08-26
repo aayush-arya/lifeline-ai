@@ -9,7 +9,7 @@ A healthcare dashboard for tracking vitals, finding nearby hospitals, booking ap
 
 ## Live demo
 
-**[Add your deployed URL here after following the deployment guide below]**
+**[lifeline-ai-nine.vercel.app](https://lifeline-ai-nine.vercel.app)** (backend on Render: [lifeline-ai-backend-omx6.onrender.com](https://lifeline-ai-backend-omx6.onrender.com) — free tier, sleeps after 15 min of inactivity, so the first request may take a few seconds)
 
 Sign in with the seeded demo account, or skip the form and continue as a guest:
 
