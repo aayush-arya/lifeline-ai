@@ -11,7 +11,7 @@ Your professional healthcare dashboard is ready to use. Here's everything you ne
 ### Method 1: Double-Click Start Script (Windows)
 ```
 1. Open File Explorer
-2. Navigate to: C:\Users\Admin\Desktop\Aayush Projects\Claude Projects\lifeline-healthcare
+2. Navigate to the folder where you cloned this repository
 3. Double-click: start.bat
 4. Wait 30 seconds for both servers to start
 5. Open browser to: http://localhost:3000
