@@ -27,6 +27,7 @@ Sign in with the seeded demo account, or skip the form and continue as a guest:
 - **Appointments** - book and track appointments against real hospitals
 - **JWT authentication** - bcrypt-hashed passwords, per-user route authorization (one account's token can't read or write another account's data)
 - **Fully responsive** - desktop sidebar nav collapses to a mobile drawer
+- **Dark mode** - toggle in the header, persisted across visits
 
 |  |  |
 |---|---|
