@@ -1,14 +1,16 @@
-const { mockData } = require('../data/store');
+const repo = require('../data/repository');
 
-function update(req, res) {
+async function update(req, res) {
   try {
-    const user = mockData.users.find((u) => u.id === req.params.id);
-    if (!user) {
+    const existing = await repo.users.findById(req.params.id);
+    if (!existing) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
     const { name, email } = req.body;
-    if (name !== undefined) user.name = name;
-    if (email !== undefined) user.email = email;
+    const patch = {};
+    if (name !== undefined) patch.name = name;
+    if (email !== undefined) patch.email = email;
+    const user = await repo.users.update(req.params.id, patch);
     res.json({ success: true, user: { id: user.id, name: user.name, email: user.email, userType: user.userType } });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });

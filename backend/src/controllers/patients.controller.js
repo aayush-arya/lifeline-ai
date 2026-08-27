@@ -1,30 +1,26 @@
-const { mockData, nextId } = require('../data/store');
+const repo = require('../data/repository');
 
-function getAll(req, res) {
+async function getAll(req, res) {
   try {
-    res.json({ success: true, patients: mockData.patients });
+    const patients = await repo.patients.findAll();
+    res.json({ success: true, patients });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 }
 
-function create(req, res) {
+async function create(req, res) {
   try {
-    const patient = {
-      _id: 'patient-' + nextId.patients++,
-      ...req.body,
-      createdAt: new Date(),
-    };
-    mockData.patients.push(patient);
+    const patient = await repo.patients.create(req.body);
     res.json({ success: true, patient });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 }
 
-function getById(req, res) {
+async function getById(req, res) {
   try {
-    const patient = mockData.patients.find((p) => p._id === req.params.id);
+    const patient = await repo.patients.findById(req.params.id);
     res.json({ success: true, patient });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });

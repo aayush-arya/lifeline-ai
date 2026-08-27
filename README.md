@@ -40,7 +40,7 @@ Sign in with the seeded demo account, or skip the form and continue as a guest:
 
 **Backend** - Node.js, Express 5, JWT (`jsonwebtoken`), `bcryptjs`, Node's built-in test runner + Supertest
 
-**Data** - an in-memory store, seeded on boot. There's no database to provision, so the app runs with zero configuration; see [Data layer](#data-layer) below if you want to swap in a real one.
+**Data** - MongoDB via Mongoose when `MONGODB_URI` is set; an in-memory store with the same seed data otherwise, so the app still runs with zero configuration. See [Data layer](#data-layer).
 
 ## Architecture
 
@@ -58,10 +58,15 @@ backend/
   server.js         app wiring only - middleware, routes, the bed-simulation interval
   src/
     routes/         one file per resource, mounted under /api
-    controllers/     request handlers
+    controllers/     request handlers - call data/repository.js, never a model or the store directly
     middleware/      requireAuth / requireOwnUser (JWT verification + per-user authorization)
     services/        geo distance, bed-occupancy simulation, Google Places client
-    data/store.js    the in-memory data store + seed data
+    models/          Mongoose schemas (used only when MONGODB_URI is set)
+    config/db.js     connects to MongoDB when configured
+    data/
+      repository.js  the dual-mode data layer - see "Data layer" below
+      store.js       the in-memory fallback data + seed data
+      seed.js        seeds MongoDB from the same seed data on first boot
 ```
 
 Both sides moved from a single monolithic file (one 1,080-line `App.tsx`, one 442-line `server.js`) to this structure; behavior is unchanged, just organized.
@@ -99,6 +104,7 @@ Copy `backend/.env.example` to `backend/.env` and fill in what you need - every 
 | `PORT` | API server port. Defaults to `5000`. |
 | `JWT_SECRET` | Signs auth tokens. Falls back to an insecure dev default (with a console warning) if unset - set a real value before deploying. |
 | `GOOGLE_MAPS_API_KEY` | Enables real nearby-hospital search via Google Places. Without it, `/api/hospitals/nearby` falls back to bundled mock hospitals sorted by real distance. |
+| `MONGODB_URI` | Enables MongoDB persistence (see [Data layer](#data-layer)). A free cluster from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) works. Without it, the in-memory store is used. |
 
 The frontend reads `VITE_API_URL` (see `frontend/vercel.json` / your deployment config) to know where the API lives; it defaults to `http://localhost:5000/api`.
 
@@ -109,7 +115,7 @@ cd backend && npm test    # Node's built-in test runner + Supertest
 cd frontend && npm test   # Vitest + React Testing Library
 ```
 
-Both suites also run in CI on every push and pull request (see the badge above).
+Both suites also run in CI on every push and pull request (see the badge above). The backend suite includes tests that spin up a real (ephemeral) MongoDB via `mongodb-memory-server` and verify data actually round-trips through it - not just that the code compiles.
 
 ## API reference
 
@@ -133,7 +139,12 @@ All routes are prefixed with `/api`. Routes marked 🔒 require `Authorization: 
 
 ## Data layer
 
-Everything lives in `backend/src/data/store.js` as plain in-memory objects, seeded with a demo user, a demo patient, one vitals record, and three hospitals. That's a deliberate choice for a project meant to be cloned and run instantly - there's nothing to provision. To point it at a real database instead, replace the reads/writes in `src/controllers/*.js` with calls to your persistence layer of choice; the entity shapes are already documented via the seed data and `frontend/src/types.ts`.
+`backend/src/data/repository.js` is the only thing controllers talk to for data access - it exposes the same async functions (`users.findByEmail`, `vitals.create`, etc.) regardless of what's backing them:
+
+- **`MONGODB_URI` set** - every call goes through Mongoose models in `src/models/`. `data/seed.js` seeds MongoDB with the same demo user, patient, vitals record, and three hospitals on first boot (idempotent - only inserts into empty collections).
+- **`MONGODB_URI` unset** - the same calls read and write `data/store.js`'s plain in-memory objects, seeded with the same data.
+
+This means the app is clonable and runnable with zero setup, while still supporting real persistence for a deployment that needs to survive restarts - set `MONGODB_URI` and nothing else changes.
 
 ## Deployment
 

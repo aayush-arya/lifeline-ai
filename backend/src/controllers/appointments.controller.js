@@ -1,23 +1,17 @@
-const { mockData, nextId } = require('../data/store');
+const repo = require('../data/repository');
 
-function create(req, res) {
+async function create(req, res) {
   try {
-    const appointment = {
-      _id: 'apt-' + nextId.appointments++,
-      ...req.body,
-      patientId: req.userId,
-      createdAt: new Date(),
-    };
-    mockData.appointments.push(appointment);
+    const appointment = await repo.appointments.create({ ...req.body, patientId: req.userId });
     res.json({ success: true, appointment });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 }
 
-function getByUserId(req, res) {
+async function getByUserId(req, res) {
   try {
-    const appointments = mockData.appointments.filter((a) => a.patientId === req.params.userId);
+    const appointments = await repo.appointments.findByPatientId(req.params.userId);
     res.json({ success: true, appointments });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });

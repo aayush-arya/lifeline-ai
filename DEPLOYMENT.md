@@ -11,6 +11,7 @@ The backend and frontend deploy independently. This guide uses Render (backend) 
    |---|---|
    | `JWT_SECRET` | a long random string - generate one with `openssl rand -hex 32` |
    | `GOOGLE_MAPS_API_KEY` | optional, enables real nearby-hospital search |
+   | `MONGODB_URI` | optional, enables real persistence - a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster's connection string. Without it, data resets whenever the free-tier service spins down. |
 4. Deploy, then copy the resulting URL (e.g. `https://lifeline-ai-backend.onrender.com`).
 
 Render's free tier sleeps after 15 minutes of inactivity - the first request after a sleep takes a few seconds to wake it back up.

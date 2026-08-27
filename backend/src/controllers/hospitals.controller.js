@@ -1,25 +1,27 @@
-const { mockData, nextId } = require('../data/store');
+const repo = require('../data/repository');
 const { haversineKm } = require('../services/geo');
 const { GOOGLE_MAPS_API_KEY, fetchNearbyHospitals } = require('../services/googlePlaces');
 
-function getAll(req, res) {
+async function getAll(req, res) {
   try {
-    res.json({ success: true, hospitals: mockData.hospitals });
+    const hospitals = await repo.hospitals.findAll();
+    res.json({ success: true, hospitals });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
 }
 
-// Real hospitals via Google Places when configured, mock data sorted by
-// real distance otherwise. Bed counts are always a live simulation layered
-// on top - see services/bedSimulation.js.
+// Real hospitals via Google Places when configured, mock/stored data sorted
+// by real distance otherwise. Bed counts are always a live simulation
+// layered on top - see services/bedSimulation.js.
 async function getNearby(req, res) {
   const lat = parseFloat(req.query.lat);
   const lng = parseFloat(req.query.lng);
   const hasLocation = !Number.isNaN(lat) && !Number.isNaN(lng);
 
   if (!GOOGLE_MAPS_API_KEY) {
-    const hospitals = mockData.hospitals.map((h) => ({
+    const stored = await repo.hospitals.findAll();
+    const hospitals = stored.map((h) => ({
       ...h,
       distanceKm: hasLocation ? Math.round(haversineKm(lat, lng, h.latitude, h.longitude) * 10) / 10 : null,
     }));
@@ -35,8 +37,9 @@ async function getNearby(req, res) {
     const hospitals = await fetchNearbyHospitals(lat, lng);
     res.json({ success: true, source: 'google-places', hospitals });
   } catch (error) {
-    console.error('Google Places request failed, falling back to mock hospitals:', error.message);
-    const hospitals = mockData.hospitals
+    console.error('Google Places request failed, falling back to stored hospitals:', error.message);
+    const stored = await repo.hospitals.findAll();
+    const hospitals = stored
       .map((h) => ({
         ...h,
         distanceKm: Math.round(haversineKm(lat, lng, h.latitude, h.longitude) * 10) / 10,
@@ -46,14 +49,9 @@ async function getNearby(req, res) {
   }
 }
 
-function create(req, res) {
+async function create(req, res) {
   try {
-    const hospital = {
-      _id: 'hospital-' + nextId.hospitals++,
-      ...req.body,
-      createdAt: new Date(),
-    };
-    mockData.hospitals.push(hospital);
+    const hospital = await repo.hospitals.create(req.body);
     res.json({ success: true, hospital });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });

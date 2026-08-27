@@ -10,6 +10,7 @@ services:
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in your environment or a .env file}
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      MONGODB_URI: ${MONGODB_URI:-}
     ports:
       - "5000:5000"
 

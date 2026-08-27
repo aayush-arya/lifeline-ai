@@ -1,20 +1,16 @@
-const { mockData } = require('../data/store');
+const repo = require('../data/repository');
 
-function getDashboard(req, res) {
+async function getDashboard(req, res) {
   try {
-    const vitals = mockData.vitals
-      .filter((v) => v.userId === req.params.userId)
-      .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt))[0];
-    const appointments = mockData.appointments.filter((a) => a.patientId === req.params.userId);
-    const patient = mockData.patients.find((p) => p.userId === req.params.userId);
+    const [latestVitals, appointments, patient] = await Promise.all([
+      repo.vitals.findLatestByUserId(req.params.userId),
+      repo.appointments.findByPatientId(req.params.userId),
+      repo.patients.findByUserId(req.params.userId),
+    ]);
 
     res.json({
       success: true,
-      data: {
-        latestVitals: vitals,
-        appointments,
-        patient,
-      },
+      data: { latestVitals, appointments, patient },
     });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
