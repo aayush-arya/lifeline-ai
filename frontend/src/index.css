@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Manual (class-based) dark mode instead of Tailwind v4's default
+   media-query-only strategy, so the in-app toggle can override the OS
+   preference. Toggled by adding/removing "dark" on <html> - see lib/theme.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   * {
     margin: 0;
@@ -16,6 +21,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: #f8fafc;
   color: #0f172a;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 html, body, #root {
@@ -40,6 +51,14 @@ html, body, #root {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 @keyframes toast-in {

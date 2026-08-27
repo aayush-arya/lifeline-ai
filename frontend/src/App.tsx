@@ -4,6 +4,7 @@ import { User, Hospital, Vital, Appointment } from './types';
 import { authAPI, hospitalAPI, vitalAPI, appointmentAPI, userAPI, setAuthToken } from './api';
 import { getLocationOnce, type Coordinates } from './lib/geolocation';
 import { ToastProvider, useToast } from './components/ui/Toast';
+import { ThemeProvider } from './lib/theme';
 import { AppShell } from './components/layout/AppShell';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -295,10 +296,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <AppRoutes />
-      </ToastProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

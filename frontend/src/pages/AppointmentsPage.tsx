@@ -23,8 +23,8 @@ export function AppointmentsPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Schedule</p>
-            <h1 className="text-3xl font-bold text-slate-900">Your Appointments</h1>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Schedule</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Your Appointments</h1>
           </div>
           <Button onClick={onOpenBooking} className="hidden md:inline-flex shrink-0">
             <Plus className="w-4 h-4" />
@@ -34,11 +34,11 @@ export function AppointmentsPage() {
 
         {appointments.length === 0 ? (
           <Card className="p-16 text-center">
-            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-5">
               <Clock className="w-6 h-6 text-slate-400" />
             </div>
-            <p className="text-slate-700 text-lg font-bold">No appointments scheduled</p>
-            <p className="text-slate-500 mt-1.5 text-sm">Book your first appointment</p>
+            <p className="text-slate-700 dark:text-slate-300 text-lg font-bold">No appointments scheduled</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm">Book your first appointment</p>
             <Button onClick={onOpenBooking} className="mt-6 mx-auto">
               Schedule Now
             </Button>
@@ -48,15 +48,15 @@ export function AppointmentsPage() {
             {appointments.map((apt, idx) => (
               <Card key={idx} hoverable className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5 text-indigo-600" />
+                  <div className="w-11 h-11 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">{apt.reason}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{new Date(apt.appointmentDate as unknown as string).toLocaleDateString()}</p>
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{apt.reason}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{new Date(apt.appointmentDate as unknown as string).toLocaleDateString()}</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-full text-xs shrink-0">
+                <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 font-semibold rounded-full text-xs shrink-0">
                   {apt.status}
                 </span>
               </Card>
@@ -69,13 +69,13 @@ export function AppointmentsPage() {
         <Modal title="Book Appointment" onClose={() => setShowBookingModal(false)}>
           <form onSubmit={onBookAppointment} className="space-y-4">
             <div>
-              <label htmlFor="hospital-select" className="block text-sm font-semibold text-slate-700 mb-1.5">Hospital</label>
+              <label htmlFor="hospital-select" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Hospital</label>
               <select
                 id="hospital-select"
                 required
                 value={bookingForm.hospitalId}
                 onChange={(e) => setBookingForm({ ...bookingForm, hospitalId: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-500/20 transition-all"
               >
                 <option value="">Select a hospital</option>
                 {hospitals?.map((h: Hospital) => (

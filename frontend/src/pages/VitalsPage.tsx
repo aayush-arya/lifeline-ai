@@ -13,17 +13,17 @@ export function VitalsPage() {
     <div className="p-6 lg:p-10">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Tracking</p>
-          <h1 className="text-3xl font-bold text-slate-900">Health Vitals</h1>
-          <p className="text-sm text-slate-500">Monitor your vital signs for better health insights</p>
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Tracking</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Health Vitals</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Monitor your vital signs for better health insights</p>
         </div>
 
         {heartRates.length > 1 && (
           <Card className="p-6 flex items-center justify-between gap-6">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Heart rate trend</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{heartRates[0]} bpm</p>
-              <p className="text-xs text-slate-500 mt-0.5">Last {heartRates.length} readings</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Heart rate trend</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">{heartRates[0]} bpm</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Last {heartRates.length} readings</p>
             </div>
             <div className="h-12 w-40">
               <Sparkline values={heartRates} colorClassName="bg-red-500" />
@@ -32,7 +32,7 @@ export function VitalsPage() {
         )}
 
         <Card className="p-8">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Record New Vitals</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50 mb-6">Record New Vitals</h3>
           <form onSubmit={onAddVital} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <TextField
@@ -67,19 +67,19 @@ export function VitalsPage() {
         </Card>
 
         <div className="space-y-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">History</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">History</p>
           {vitals.length === 0 ? (
-            <Card className="p-16 text-center text-slate-500 text-sm">No vitals recorded yet.</Card>
+            <Card className="p-16 text-center text-slate-500 dark:text-slate-400 text-sm">No vitals recorded yet.</Card>
           ) : (
-            <Card className="divide-y divide-slate-100">
+            <Card className="divide-y divide-slate-100 dark:divide-slate-800">
               {vitals.map((vital, idx) => (
                 <div key={idx} className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">{new Date(vital.recordedAt).toLocaleDateString()}</p>
-                      <p className="text-xs text-slate-500">{new Date(vital.recordedAt).toLocaleTimeString()}</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{new Date(vital.recordedAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(vital.recordedAt).toLocaleTimeString()}</p>
                     </div>
-                    <Activity className="w-4 h-4 text-indigo-600" />
+                    <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
@@ -88,9 +88,9 @@ export function VitalsPage() {
                       ['Temperature', `${vital.temperature}°F`],
                       ['Oxygen', `${vital.oxygenLevel}%`],
                     ].map(([label, value]) => (
-                      <div key={label} className="bg-slate-50 p-3 rounded-lg">
-                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">{label}</p>
-                        <p className="text-sm font-bold text-slate-900">{value}</p>
+                      <div key={label} className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-50">{value}</p>
                       </div>
                     ))}
                   </div>

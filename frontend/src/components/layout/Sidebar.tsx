@@ -10,7 +10,7 @@ const NAV_ITEMS = [
 
 export function Sidebar({ onLogout }: { onLogout: () => void }) {
   return (
-    <div className="hidden md:flex flex-col w-20 bg-white border-r border-slate-200">
+    <div className="hidden md:flex flex-col w-20 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
       <div className="p-5 flex justify-center">
         <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center">
           <Heart className="w-5 h-5 text-white" />
@@ -25,7 +25,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
             title={label}
             className={({ isActive }) =>
               `p-3 rounded-xl transition-colors ${
-                isActive ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                isActive ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
               }`
             }
           >
@@ -50,7 +50,7 @@ export function Sidebar({ onLogout }: { onLogout: () => void }) {
           onClick={onLogout}
           aria-label="Logout"
           title="Logout"
-          className="p-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="p-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-colors"
         >
           <LogOut className="w-5 h-5" />
         </button>

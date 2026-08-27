@@ -22,18 +22,18 @@ export function ProfilePage() {
     <div className="p-6 lg:p-10">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Account</p>
-          <h1 className="text-3xl font-bold text-slate-900">Profile Settings</h1>
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Account</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Profile Settings</h1>
         </div>
 
         <Card className="p-8">
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-200">
+          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
             <div className="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
               <Heart className="w-9 h-9 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-              <p className="text-slate-500 text-sm mt-0.5">{user.email || 'Guest User'}</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">{user.name}</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{user.email || 'Guest User'}</p>
               <div className="mt-3">
                 <Badge variant="info">{user.userType.toUpperCase()}</Badge>
               </div>

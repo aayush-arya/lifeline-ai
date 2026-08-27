@@ -16,7 +16,7 @@ const FEATURES = ['Real-time Health Monitoring', 'Find Hospitals Instantly', 'Se
 
 export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, setPassword, loading }: LoginPageProps) {
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-white dark:bg-slate-950">
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 lg:px-16 py-12">
         <div className="max-w-md mx-auto w-full space-y-10">
           <div className="flex items-center gap-3">
@@ -24,17 +24,17 @@ export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, se
               <Heart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">LifeLine AI</h1>
-              <p className="text-slate-500 text-xs">Healthcare Platform</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50">LifeLine AI</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Healthcare Platform</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <h2 className="text-4xl font-bold text-slate-900 leading-tight">
+            <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 leading-tight">
               Your Health,<br />
-              <span className="text-indigo-600">Our Priority</span>
+              <span className="text-indigo-600 dark:text-indigo-400">Our Priority</span>
             </h2>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-slate-600 dark:text-slate-400">
               Monitor your vitals, connect with hospitals, and manage your health securely.
             </p>
           </div>
@@ -42,14 +42,14 @@ export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, se
           <ul className="space-y-3">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4.5 h-4.5 text-indigo-600 shrink-0" />
-                <span className="text-slate-700 text-sm font-medium">{f}</span>
+                <CheckCircle2 className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300 text-sm font-medium">{f}</span>
               </li>
             ))}
           </ul>
 
           <div className="space-y-5">
-            <h3 className="text-lg font-bold text-slate-900">Get Started</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">Get Started</h3>
             <form onSubmit={onLogin} className="space-y-4">
               <TextField
                 label="Email"
@@ -75,10 +75,10 @@ export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, se
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-slate-200 dark:border-slate-800" />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-3 bg-white text-slate-500 text-xs font-semibold">OR</span>
+                <span className="px-3 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-xs font-semibold">OR</span>
               </div>
             </div>
 
@@ -87,12 +87,12 @@ export function LoginPage({ onGuestLogin, onLogin, email, setEmail, password, se
             </Button>
           </div>
 
-          <div className="text-center space-y-1.5 pt-4 border-t border-slate-200">
-            <p className="text-xs text-slate-500">Demo account: demo@lifeline.ai / demo1234 — or continue as guest</p>
-            <p className="text-xs text-slate-400">
+          <div className="text-center space-y-1.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <p className="text-xs text-slate-500 dark:text-slate-400">Demo account: demo@lifeline.ai / demo1234 — or continue as guest</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               By signing in, you agree to our{' '}
-              <a href="#" className="text-indigo-600 hover:underline">Terms</a> and{' '}
-              <a href="#" className="text-indigo-600 hover:underline">Privacy</a>
+              <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms</a> and{' '}
+              <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy</a>
             </p>
           </div>
         </div>

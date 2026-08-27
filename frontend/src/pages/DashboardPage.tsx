@@ -29,9 +29,9 @@ export function DashboardPage() {
     <div className="p-6 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-10">
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Welcome back</p>
-          <h1 className="text-3xl font-bold text-slate-900">Hello, {user.name}</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Welcome back</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">Hello, {user.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
@@ -52,7 +52,7 @@ export function DashboardPage() {
         </button>
 
         <div className="space-y-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Your Vitals</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Your Vitals</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard icon={Heart} label="Heart Rate" value={lastVital?.heartRate ? `${lastVital.heartRate}` : '--'} unit="bpm" tone="red">
               {heartRates.length > 1 && <Sparkline values={heartRates} colorClassName="bg-red-500" />}
@@ -64,7 +64,7 @@ export function DashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quick Actions</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Quick Actions</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <ActionButton icon={Droplet} label="Record Vitals" onClick={onRecordVitals} />
             <ActionButton icon={MapPin} label="Find Hospital" onClick={onFindHospital} />
@@ -77,20 +77,20 @@ export function DashboardPage() {
 
         {vitals.length > 0 && (
           <div className="space-y-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Recent Records</p>
-            <Card className="divide-y divide-slate-100">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Recent Records</p>
+            <Card className="divide-y divide-slate-100 dark:divide-slate-800">
               {vitals.slice(0, 4).map((vital, idx) => (
-                <div key={idx} className="flex items-center justify-between p-5 hover:bg-slate-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
+                <div key={idx} className="flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-                      <Activity className="w-4 h-4 text-indigo-600" />
+                    <div className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">{new Date(vital.recordedAt).toLocaleDateString()}</p>
-                      <p className="text-xs text-slate-500">HR: {vital.heartRate} · BP: {vital.bloodPressure} · O₂: {vital.oxygenLevel}%</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{new Date(vital.recordedAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">HR: {vital.heartRate} · BP: {vital.bloodPressure} · O₂: {vital.oxygenLevel}%</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 </div>
               ))}
             </Card>
@@ -103,8 +103,8 @@ export function DashboardPage() {
           <ul className="space-y-3.5">
             {HEALTH_TIPS.map((tip, i) => (
               <li key={i} className="flex gap-3">
-                <CheckCircle2 className="w-4.5 h-4.5 text-indigo-600 shrink-0 mt-0.5" />
-                <span className="text-slate-700 text-sm">{tip}</span>
+                <CheckCircle2 className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                <span className="text-slate-700 dark:text-slate-300 text-sm">{tip}</span>
               </li>
             ))}
           </ul>
@@ -114,7 +114,7 @@ export function DashboardPage() {
       {showReportsModal && (
         <Modal title="Health Report" onClose={() => setShowReportsModal(false)}>
           {vitals.length === 0 ? (
-            <p className="text-slate-500 text-sm">No vitals recorded yet — record some vitals to see your report.</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No vitals recorded yet — record some vitals to see your report.</p>
           ) : (
             <div className="space-y-3">
               {[
@@ -123,9 +123,9 @@ export function DashboardPage() {
                 ['Average Oxygen Level', `${avg('oxygenLevel')}%`],
                 ['Latest Blood Pressure', vitals[0]?.bloodPressure || '--'],
               ].map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl">
-                  <p className="text-sm font-semibold text-slate-600">{label}</p>
-                  <p className="text-sm font-bold text-slate-900">{value}</p>
+                <div key={label} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{label}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-slate-50">{value}</p>
                 </div>
               ))}
             </div>
